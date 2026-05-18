@@ -1,0 +1,86 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum UserRole {
+  guest
+  member
+  admin
+}
+
+enum PlanType {
+  free
+  plus
+}
+
+enum SessionMode {
+  daily_guidance
+  emotion_question
+  card_draw
+}
+
+enum SessionCategory {
+  relationship
+  stress
+  career
+  self_doubt
+  sleep
+}
+
+model User {
+  id           String    @id @default(cuid())
+  name         String
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  role         UserRole  @default(member)
+  planType     PlanType  @default(free) @map("plan_type")
+  sessions     Session[]
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+model Session {
+  id                 String          @id @default(cuid())
+  userId             String?         @map("user_id")
+  guestToken         String?         @map("guest_token")
+  mode               SessionMode
+  category           SessionCategory
+  userInput          String          @default("") @map("user_input")
+  moodScore          Int?            @map("mood_score")
+  cardId             String?         @map("card_id")
+  responseTitle      String          @map("response_title")
+  responseEmpathy    String          @map("response_empathy")
+  responseReflection String          @map("response_reflection")
+  responseAction     String          @map("response_action")
+  safetyFlag         Boolean         @default(false) @map("safety_flag")
+  createdAt          DateTime        @default(now()) @map("created_at")
+  card               Card?           @relation(fields: [cardId], references: [id])
+  user               User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([guestToken])
+  @@map("sessions")
+}
+
+model Card {
+  id              String    @id @default(cuid())
+  name            String    @unique
+  uprightMeaning  String    @map("upright_meaning")
+  reversedMeaning String    @map("reversed_meaning")
+  categoryHint    String    @map("category_hint")
+  sessions        Session[]
+
+  @@map("cards")
+}

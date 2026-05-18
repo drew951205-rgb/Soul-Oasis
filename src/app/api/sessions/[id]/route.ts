@@ -1,0 +1,84 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getUserFromRequest } from "@/lib/auth";
+import { getDb } from "@/lib/db";
+
+function toDetail(session: {
+  id: string;
+  mode: string;
+  category: string;
+  userInput: string;
+  moodScore: number | null;
+  responseTitle: string;
+  responseEmpathy: string;
+  responseReflection: string;
+  responseAction: string;
+  safetyFlag: boolean;
+  createdAt: Date;
+  card?: { name: string } | null;
+}) {
+  return {
+    id: session.id,
+    created_at: session.createdAt,
+    mode: session.mode,
+    category: session.category,
+    user_input: session.userInput,
+    mood_score: session.moodScore,
+    card_name: session.card?.name ?? null,
+    result: {
+      title: session.responseTitle,
+      empathy: session.responseEmpathy,
+      reflection: session.responseReflection,
+      action: session.responseAction,
+      safety_flag: session.safetyFlag,
+    },
+  };
+}
+
+async function findAuthorizedSession(request: NextRequest, id: string) {
+  const user = await getUserFromRequest(request);
+  const guestToken = request.nextUrl.searchParams.get("guest_token") ?? "";
+
+  return getDb().session.findFirst({
+    where: user ? { id, userId: user.id } : { id, guestToken },
+    include: { card: { select: { name: true } } },
+  });
+}
+
+export async function GET(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> },
+) {
+  const { id } = await context.params;
+  const session = await findAuthorizedSession(request, id);
+
+  if (!session) {
+    return NextResponse.json({ error: "找不到這筆紀錄。" }, { status: 404 });
+  }
+
+  return NextResponse.json({ session: toDetail(session) });
+}
+
+export async function DELETE(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> },
+) {
+  const user = await getUserFromRequest(request);
+
+  if (!user) {
+    return NextResponse.json({ error: "請先登入。" }, { status: 401 });
+  }
+
+  const { id } = await context.params;
+  const session = await getDb().session.findFirst({
+    where: { id, userId: user.id },
+    select: { id: true },
+  });
+
+  if (!session) {
+    return NextResponse.json({ error: "找不到這筆紀錄。" }, { status: 404 });
+  }
+
+  await getDb().session.delete({ where: { id } });
+
+  return NextResponse.json({ ok: true });
+}
