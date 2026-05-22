@@ -6,7 +6,7 @@ Soul Oasis 是一個 AI 情緒陪伴與自我整理網站 MVP。它不是算命�
 
 > 讓使用者願意安心地繼續說下去。
 
-Version: 1.1 AI 陪伴對話版
+Version: 1.2 GPT API 多輪陪伴對話版
 
 ## 專案目標
 
@@ -25,6 +25,9 @@ Version: 1.1 AI 陪伴對話版
 - 首頁 Landing Page
 - AI 陪伴頁
 - 對話結果頁
+- GPT API 多輪聊天
+- 陪伴師 system prompt
+- 對話到一定階段後顯示註冊 / 方案引導
 - 抽卡互動與洗牌動畫，卡片只作為反思提示
 - 我的紀錄列表與單筆詳細頁
 - Email / Password 登入與註冊
@@ -70,6 +73,7 @@ AI 必須維持一致人格：
 - Styling: Tailwind CSS
 - Auth: 自建 Email / Password + JWT httpOnly cookie
 - Password Hash: bcryptjs
+- AI: OpenAI Responses API
 - Database: Prisma schema + SQLite local MVP
 - ORM Client: Prisma 7 + better-sqlite3 adapter
 - Icons: lucide-react
@@ -86,6 +90,20 @@ npm install
 
 ```bash
 npm run db:setup
+```
+
+設定環境變數：
+
+```bash
+cp .env.example .env.local
+```
+
+至少需要：
+
+```bash
+OPENAI_API_KEY="你的 OpenAI API Key"
+OPENAI_MODEL="gpt-5.4-mini"
+JWT_SECRET="一段夠長的隨機字串"
 ```
 
 啟動開發伺服器：
@@ -116,6 +134,7 @@ npm run prisma:generate
 
 - `users`
 - `sessions`
+- `chat_messages`
 - `cards`
 
 本機資料庫檔案為：
@@ -156,3 +175,13 @@ Soul Oasis 僅提供情緒陪伴、自我反思與紀錄整理，不構成醫療
 - Auth: 可維持自建 JWT，或後續改 Supabase Auth
 
 目前 MVP 使用 SQLite 方便本機快速驗證；若要正式上線，建議改接 PostgreSQL。
+
+## 關於「訓練陪伴師」
+
+目前 v1.2 先用 system prompt 固定陪伴師人格，不直接 fine-tune。
+
+原因：
+
+- MVP 階段需要快速調整語氣
+- 情緒對話資料敏感，需先處理使用者同意、匿名化與資料刪除
+- 先用 prompt + 評估案例校準，等累積足夠安全資料後再考慮 fine-tuning

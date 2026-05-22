@@ -34,6 +34,12 @@ type SessionDetail = {
     action: string;
     safety_flag: boolean;
   };
+  messages: {
+    id: string;
+    role: string;
+    content: string;
+    created_at: string;
+  }[];
 };
 
 export default function RecordDetailPage() {
@@ -110,18 +116,42 @@ export default function RecordDetailPage() {
           </section>
         )}
 
-        <div className="mt-5 grid gap-4">
-          {[
-            ["陪伴回應", session.result.empathy],
-            ["可以想一想", session.result.reflection],
-            ["小提醒", session.result.action],
-          ].map(([title, text]) => (
-            <section key={title} className="rounded-lg border border-[#e6dfd3] bg-white p-5">
-              <h2 className="font-semibold text-[#26332d]">{title}</h2>
-              <p className="mt-3 leading-7 text-[#6c756d]">{text}</p>
-            </section>
-          ))}
-        </div>
+        {session.messages.length > 0 ? (
+          <section className="mt-5 rounded-lg border border-[#e6dfd3] bg-white p-5">
+            <h2 className="font-semibold text-[#26332d]">完整對話</h2>
+            <div className="mt-4 space-y-4">
+              {session.messages.map((message) => (
+                <div
+                  key={message.id}
+                  className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
+                >
+                  <p
+                    className={`max-w-[82%] whitespace-pre-wrap rounded-lg px-4 py-3 text-sm leading-6 ${
+                      message.role === "user"
+                        ? "bg-[#51685a] text-white"
+                        : "bg-[#f8f5ee] text-[#26332d]"
+                    }`}
+                  >
+                    {message.content}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : (
+          <div className="mt-5 grid gap-4">
+            {[
+              ["陪伴回應", session.result.empathy],
+              ["可以想一想", session.result.reflection],
+              ["小提醒", session.result.action],
+            ].map(([title, text]) => (
+              <section key={title} className="rounded-lg border border-[#e6dfd3] bg-white p-5">
+                <h2 className="font-semibold text-[#26332d]">{title}</h2>
+                <p className="mt-3 leading-7 text-[#6c756d]">{text}</p>
+              </section>
+            ))}
+          </div>
+        )}
       </article>
     </main>
   );
