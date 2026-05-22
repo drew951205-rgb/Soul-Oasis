@@ -89,12 +89,65 @@ function ensureSqliteDatabase(url: string) {
       session_id TEXT NOT NULL,
       role TEXT NOT NULL,
       content TEXT NOT NULL,
+      safety_flag BOOLEAN NOT NULL DEFAULT false,
       created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
       CONSTRAINT chat_messages_session_id_fkey FOREIGN KEY (session_id) REFERENCES sessions (id) ON DELETE CASCADE ON UPDATE CASCADE
     );
 
     CREATE INDEX IF NOT EXISTS chat_messages_session_id_created_at_idx ON chat_messages(session_id, created_at);
+
+    CREATE TABLE IF NOT EXISTS usage_limits (
+      id TEXT NOT NULL PRIMARY KEY,
+      user_id TEXT,
+      guest_token TEXT,
+      date TEXT NOT NULL,
+      message_count INTEGER NOT NULL DEFAULT 0,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT usage_limits_user_id_fkey FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS usage_limits_user_id_date_idx ON usage_limits(user_id, date);
+    CREATE INDEX IF NOT EXISTS usage_limits_guest_token_date_idx ON usage_limits(guest_token, date);
+
+    CREATE TABLE IF NOT EXISTS subscriptions (
+      id TEXT NOT NULL PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      plan TEXT NOT NULL,
+      status TEXT NOT NULL,
+      started_at DATETIME NOT NULL,
+      expires_at DATETIME,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT subscriptions_user_id_fkey FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS subscriptions_user_id_status_idx ON subscriptions(user_id, status);
+
+    CREATE TABLE IF NOT EXISTS feedback (
+      id TEXT NOT NULL PRIMARY KEY,
+      user_id TEXT,
+      session_id TEXT NOT NULL,
+      message_id TEXT,
+      rating INTEGER NOT NULL,
+      reason TEXT,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT feedback_message_id_fkey FOREIGN KEY (message_id) REFERENCES chat_messages (id) ON DELETE SET NULL ON UPDATE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS feedback_session_id_created_at_idx ON feedback(session_id, created_at);
+    CREATE INDEX IF NOT EXISTS feedback_message_id_idx ON feedback(message_id);
   `);
+
+  const ensureColumn = (table: string, column: string, definition: string) => {
+    const columns = sqlite.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[];
+    if (!columns.some((item) => item.name === column)) {
+      sqlite.exec(`ALTER TABLE ${table} ADD COLUMN ${definition}`);
+    }
+  };
+
+  ensureColumn("sessions", "safety_flag", "safety_flag BOOLEAN NOT NULL DEFAULT false");
+  ensureColumn("chat_messages", "safety_flag", "safety_flag BOOLEAN NOT NULL DEFAULT false");
 
   const insert = sqlite.prepare(`
     INSERT INTO cards (id, name, upright_meaning, reversed_meaning, category_hint)

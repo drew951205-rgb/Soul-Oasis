@@ -15,7 +15,7 @@ function toDetail(session: {
   safetyFlag: boolean;
   createdAt: Date;
   card?: { name: string } | null;
-  messages?: { id: string; role: string; content: string; createdAt: Date }[];
+  messages?: { id: string; role: string; content: string; safetyFlag: boolean; createdAt: Date }[];
 }) {
   return {
     id: session.id,
@@ -37,6 +37,7 @@ function toDetail(session: {
           id: message.id,
           role: message.role,
           content: message.content,
+          safety_flag: message.safetyFlag,
           created_at: message.createdAt,
         }))
       : [],
@@ -53,7 +54,7 @@ async function findAuthorizedSession(request: NextRequest, id: string) {
       card: { select: { name: true } },
       messages: {
         orderBy: { createdAt: "asc" },
-        select: { id: true, role: true, content: true, createdAt: true },
+        select: { id: true, role: true, content: true, safetyFlag: true, createdAt: true },
       },
     },
   });

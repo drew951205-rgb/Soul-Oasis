@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { AlertTriangle, FileText, Lock, Trash2 } from "lucide-react";
+import { AlertTriangle, Bot, Crown, FileText, Lock, Trash2 } from "lucide-react";
 
 const tabs = [
   { id: "disclaimer", label: "免責聲明", icon: FileText },
   { id: "privacy", label: "隱私政策", icon: Lock },
+  { id: "ai", label: "AI 使用限制", icon: Bot },
   { id: "crisis", label: "危機協助", icon: AlertTriangle },
+  { id: "subscription", label: "訂閱條款", icon: Crown },
   { id: "delete", label: "刪除申請", icon: Trash2 },
 ];
 
@@ -57,12 +59,30 @@ export default function LegalPage() {
             </div>
           )}
 
+          {active === "ai" && (
+            <div className="space-y-4 leading-7 text-[#6c756d]">
+              <h2 className="text-2xl font-semibold text-[#26332d]">AI 使用限制</h2>
+              <p>AI 陪伴只用於情緒整理、自我反思與日常陪伴，不是醫療、治療、法律或投資服務。</p>
+              <p>系統會限制單次輸入字數、每日訊息額度與基本頻率，避免過度依賴或濫用。</p>
+              <p>當內容命中自傷、自殺或急性危機相關詞時，系統會優先顯示危機協助提示。</p>
+            </div>
+          )}
+
           {active === "crisis" && (
             <div className="space-y-4 leading-7 text-[#6c756d]">
               <h2 className="text-2xl font-semibold text-[#26332d]">危機協助提示</h2>
               <p>若你有自傷、自殺、急性精神危機或立即危險，請立即尋求當地緊急協助。</p>
               <p>台灣可撥打 119、110，或聯絡 1925 安心專線。也可以前往最近急診或請身邊可信任的人陪同。</p>
               <p>命中敏感詞時，系統會顯示固定危機提示，不進行一般陪伴式內容生成。</p>
+            </div>
+          )}
+
+          {active === "subscription" && (
+            <div className="space-y-4 leading-7 text-[#6c756d]">
+              <h2 className="text-2xl font-semibold text-[#26332d]">訂閱條款</h2>
+              <p>第一版僅展示 Free 與 Plus 方案差異，不串接金流，也不會自動扣款。</p>
+              <p>Plus 預留功能包含更高每日訊息額度、長期紀錄保存與陪伴提醒，實際開放前會另行公告。</p>
+              <p>目前會員權限以 MVP 驗證為主，若未來啟用付款，會補上正式付款、取消與退款規則。</p>
             </div>
           )}
 

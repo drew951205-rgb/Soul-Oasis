@@ -45,6 +45,8 @@ model User {
   role         UserRole  @default(member)
   planType     PlanType  @default(free) @map("plan_type")
   sessions     Session[]
+  usageLimits  UsageLimit[]
+  subscriptions Subscription[]
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
 
@@ -80,11 +82,58 @@ model ChatMessage {
   sessionId String   @map("session_id")
   role      String
   content   String
+  safetyFlag Boolean @default(false) @map("safety_flag")
   createdAt DateTime @default(now()) @map("created_at")
   session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  feedback  Feedback[]
 
   @@index([sessionId, createdAt])
   @@map("chat_messages")
+}
+
+model UsageLimit {
+  id           String   @id @default(cuid())
+  userId       String?  @map("user_id")
+  guestToken   String?  @map("guest_token")
+  date         String
+  messageCount Int      @default(0) @map("message_count")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  user         User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, date])
+  @@index([guestToken, date])
+  @@map("usage_limits")
+}
+
+model Subscription {
+  id        String    @id @default(cuid())
+  userId    String    @map("user_id")
+  plan      PlanType
+  status    String
+  startedAt DateTime  @map("started_at")
+  expiresAt DateTime? @map("expires_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@map("subscriptions")
+}
+
+model Feedback {
+  id        String       @id @default(cuid())
+  userId    String?      @map("user_id")
+  sessionId String       @map("session_id")
+  messageId String?      @map("message_id")
+  rating    Int
+  reason    String?
+  createdAt DateTime     @default(now()) @map("created_at")
+  message   ChatMessage? @relation(fields: [messageId], references: [id], onDelete: SetNull)
+
+  @@index([sessionId, createdAt])
+  @@index([messageId])
+  @@map("feedback")
 }
 
 model Card {

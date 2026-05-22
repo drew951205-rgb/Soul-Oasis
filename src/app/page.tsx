@@ -38,7 +38,7 @@ export default function Home() {
                 href="/experience"
                 className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#51685a] px-5 py-3 font-semibold text-white hover:bg-[#43574b]"
               >
-                立即體驗
+                開始 AI 陪伴
                 <ArrowRight size={18} aria-hidden="true" />
               </Link>
               <Link
@@ -131,7 +131,7 @@ export default function Home() {
           <div>
             <h2 className="text-3xl font-semibold text-[#26332d]">方案預覽</h2>
             <p className="mt-3 leading-7 text-[#6c756d]">
-              第一版先展示方案差異，不串接金流。免費版可開始整理，Plus 預留無限次數與永久保存。
+              第一版先展示方案差異，不串接金流。訪客每日 5 則，免費會員每日 10 則，Plus 預留更高額度與長期保存。
             </p>
             <Link
               href="/plans"
@@ -145,12 +145,12 @@ export default function Home() {
             <div className="rounded-lg border border-[#e6dfd3] bg-[#fffdf7] p-5">
               <p className="text-sm font-semibold text-[#51685a]">Free</p>
               <p className="mt-3 text-3xl font-semibold">NT$0</p>
-              <p className="mt-2 text-sm text-[#6c756d]">每日有限次數、基本情緒紀錄。</p>
+              <p className="mt-2 text-sm text-[#6c756d]">每日 10 則、基本情緒紀錄。</p>
             </div>
             <div className="rounded-lg border border-[#8da892] bg-[#fffdf7] p-5">
               <p className="text-sm font-semibold text-[#51685a]">Plus</p>
               <p className="mt-3 text-3xl font-semibold">NT$199/mo</p>
-              <p className="mt-2 text-sm text-[#6c756d]">無限互動、永久保存、陪伴提醒。</p>
+              <p className="mt-2 text-sm text-[#6c756d]">預留更高額度、長期保存、陪伴提醒。</p>
             </div>
           </div>
         </div>

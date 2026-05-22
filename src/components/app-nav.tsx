@@ -30,7 +30,7 @@ export function AppNav() {
   const links = (
     <>
       <Link href="/experience" className="text-sm font-medium text-[#51685a] hover:text-[#26332d]">
-        立即體驗
+        開始 AI 陪伴
       </Link>
       <Link href="/plans" className="text-sm font-medium text-[#51685a] hover:text-[#26332d]">
         方案

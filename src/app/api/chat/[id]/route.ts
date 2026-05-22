@@ -16,7 +16,7 @@ export async function GET(
       card: { select: { name: true } },
       messages: {
         orderBy: { createdAt: "asc" },
-        select: { id: true, role: true, content: true, createdAt: true },
+        select: { id: true, role: true, content: true, safetyFlag: true, createdAt: true },
       },
     },
   });
@@ -35,6 +35,7 @@ export async function GET(
         id: message.id,
         role: message.role,
         content: message.content,
+        safety_flag: message.safetyFlag,
         created_at: message.createdAt,
       })),
     },

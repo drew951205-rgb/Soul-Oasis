@@ -6,14 +6,14 @@ Soul Oasis 是一個 AI 情緒陪伴與自我整理網站 MVP。它不是算命�
 
 > 讓使用者願意安心地繼續說下去。
 
-Version: 1.2 GPT API 多輪陪伴對話版
+Version: 1.3 GPT API 陪伴對話與額度控管版
 
 ## 專案目標
 
 第一版只做 Web MVP，用來驗證以下流程：
 
 1. 使用者進入首頁。
-2. 點擊「立即體驗」。
+2. 點擊「開始 AI 陪伴」。
 3. 在體驗頁選擇模式並輸入問題。
 4. 系統產生一段簡短自然的 AI 陪伴回應。
 5. 未登入使用者可查看結果，但需註冊才能保存紀錄。
@@ -27,14 +27,16 @@ Version: 1.2 GPT API 多輪陪伴對話版
 - 對話結果頁
 - GPT API 多輪聊天
 - 陪伴師 system prompt
+- Guest 每日 5 則、Free Member 每日 10 則的 AI 訊息額度控管
 - 對話到一定階段後顯示註冊 / 方案引導
+- AI 回覆回饋 API 與前端回饋按鈕
 - 抽卡互動與洗牌動畫，卡片只作為反思提示
 - 我的紀錄列表與單筆詳細頁
 - Email / Password 登入與註冊
 - Guest session 註冊後綁定會員帳號
 - 紀錄刪除
 - Free / Plus 方案展示
-- 規範中心：免責聲明、隱私政策、危機協助、刪除申請
+- 規範中心：免責聲明、隱私政策、AI 使用限制、危機協助、訂閱條款、刪除申請
 - 敏感詞危機提示
 - 基本 API rate limit
 - 響應式版面
@@ -136,6 +138,9 @@ npm run prisma:generate
 - `sessions`
 - `chat_messages`
 - `cards`
+- `usage_limits`
+- `subscriptions`
+- `feedback`
 
 本機資料庫檔案為：
 
