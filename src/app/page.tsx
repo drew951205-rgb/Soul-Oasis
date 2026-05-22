@@ -16,7 +16,7 @@ const entries = [
   { title: "睡眠", text: "讓今晚不必負責想通全部。", icon: Moon },
 ];
 
-const steps = ["選擇此刻狀態", "描述正在卡住的感受", "收到三段式陪伴回應"];
+const steps = ["選擇此刻狀態", "說出正在卡住的感受", "收到一段溫和陪伴回應"];
 
 export default function Home() {
   return (
@@ -57,7 +57,7 @@ export default function Home() {
                 你不需要立刻變好，只需要先穩住一點。
               </h2>
               <div className="mt-6 space-y-4">
-                {["情緒理解", "反思提示", "下一步建議"].map((item, index) => (
+                {["陪伴回應", "開放提問", "小提醒"].map((item, index) => (
                   <div key={item} className="flex gap-3">
                     <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-[#d8e2d5] text-sm font-semibold text-[#51685a]">
                       {index + 1}
@@ -66,8 +66,8 @@ export default function Home() {
                       <p className="font-semibold text-[#26332d]">{item}</p>
                       <p className="mt-1 text-sm leading-6 text-[#6c756d]">
                         {index === 0 && "先接住你的感受，不急著評判。"}
-                        {index === 1 && "把壓力拆開，看清楚真正卡住的地方。"}
-                        {index === 2 && "選一件今晚能完成的小行動。"}
+                        {index === 1 && "用一個問題陪你慢慢往下看。"}
+                        {index === 2 && "留下今天可以帶走的一點提醒。"}
                       </p>
                     </div>
                   </div>
@@ -112,7 +112,7 @@ export default function Home() {
             </div>
             <div className="grid gap-4">
               {[
-                ["AI 陪伴", "以固定結構回應，避免誇大與自由發散。"],
+                ["AI 陪伴", "以短句回應，避免誇大與自由發散。"],
                 ["情緒紀錄", "登入後保存每次整理，回看自己的狀態變化。"],
                 ["每日回看", "把回應變成溫柔的日常提醒。"],
               ].map(([title, text]) => (

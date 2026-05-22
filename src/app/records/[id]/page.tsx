@@ -112,9 +112,9 @@ export default function RecordDetailPage() {
 
         <div className="mt-5 grid gap-4">
           {[
-            ["情緒理解", session.result.empathy],
-            ["反思提示", session.result.reflection],
-            ["下一步建議", session.result.action],
+            ["陪伴回應", session.result.empathy],
+            ["可以想一想", session.result.reflection],
+            ["小提醒", session.result.action],
           ].map(([title, text]) => (
             <section key={title} className="rounded-lg border border-[#e6dfd3] bg-white p-5">
               <h2 className="font-semibold text-[#26332d]">{title}</h2>

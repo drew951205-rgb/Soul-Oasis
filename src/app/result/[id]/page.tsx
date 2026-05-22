@@ -87,8 +87,8 @@ export default function ResultPage() {
       )}
 
       <section className="rounded-lg border border-[#e6dfd3] bg-[#fffdf7] p-5 sm:p-8">
-        <p className="text-sm font-semibold uppercase text-[#51685a]">Companion Result</p>
-        <h1 className="mt-3 text-3xl font-semibold text-[#26332d]">{session.result.title}</h1>
+        <p className="text-sm font-semibold uppercase text-[#51685a]">Conversation Summary</p>
+        <h1 className="mt-3 text-3xl font-semibold text-[#26332d]">本次對話整理</h1>
 
         <div className="mt-5 flex flex-wrap gap-2 text-sm text-[#51685a]">
           <span className="rounded-lg bg-[#eef2ea] px-3 py-2">{categoryLabels[session.category]}</span>
@@ -116,9 +116,9 @@ export default function ResultPage() {
 
         <div className="mt-8 grid gap-4">
           {[
-            ["情緒理解", session.result.empathy],
-            ["反思提示", session.result.reflection],
-            ["下一步建議", session.result.action],
+            ["陪伴回應", session.result.empathy],
+            ["可以想一想", session.result.reflection],
+            ["小提醒", session.result.action],
           ].map(([title, text]) => (
             <section key={title} className="rounded-lg border border-[#e6dfd3] bg-white p-5">
               <h2 className="font-semibold text-[#26332d]">{title}</h2>

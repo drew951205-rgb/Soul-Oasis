@@ -41,34 +41,34 @@ const categoryCopy: Record<
   { title: string; empathy: string; reflection: string; action: string }
 > = {
   relationship: {
-    title: "先把心裡真正受傷的地方放輕一點",
-    empathy: "你在意這段關係，所以每個細節都容易被放大，這份不安其實很需要被接住。",
-    reflection: "你可以先問自己，現在最需要的是被理解、被確認，還是有一段清楚的界線。",
-    action: "今天先寫下想說的一句真心話，等情緒穩一點，再決定要不要溝通。",
+    title: "先聽見你在意的那一塊",
+    empathy: "聽起來，這段關係裡有些感受被你放在心裡一陣子了。",
+    reflection: "此刻你比較需要被理解，還是需要一點距離讓自己安靜下來？",
+    action: "可以先不用急著回應誰，讓自己的感受有一個清楚的位置。",
   },
   stress: {
-    title: "今天你更需要的是先安定自己",
-    empathy: "你像是同時背著很多任務與期待，心裡其實已經撐了很久。",
-    reflection: "試著分辨這份壓力來自事情本身，還是來自害怕自己沒有做好。",
-    action: "先完成一件最小且明確的事，其他事情暫時排到明天再整理。",
+    title: "先讓壓力有地方放下來",
+    empathy: "感覺你最近承接了不少事，心裡可能一直沒有真正停下來。",
+    reflection: "現在最讓你喘不過氣的，是事情本身，還是一直不能放鬆的感覺？",
+    action: "今天只挑一件最小的事就好，剩下的可以晚一點再整理。",
   },
   career: {
-    title: "方向不必一次確定，先看見下一步",
-    empathy: "你不是沒有努力，而是站在很多可能之間，難免會覺得每個選擇都很重。",
-    reflection: "你可以問自己，哪個方向讓你比較接近想成為的生活，而不只是別人的期待。",
-    action: "選一件可以在一週內嘗試的小行動，用結果來幫你校準方向。",
+    title: "方向可以先不用一次確定",
+    empathy: "你不是沒有想法，而是每個選擇好像都帶著重量。",
+    reflection: "如果先不管別人的期待，哪個方向讓你比較能呼吸？",
+    action: "可以先用一個小嘗試靠近它，不必把今天的選擇變成永遠。",
   },
   self_doubt: {
-    title: "你不需要用疲憊時的眼光定義自己",
-    empathy: "當你一直懷疑自己，內心其實正在承受很多沒有說出口的壓力。",
-    reflection: "先看看你對自己的批評，哪些是事實，哪些只是焦慮替你下的結論。",
-    action: "今天記下一件你有完成的小事，讓自己重新看見可被信任的部分。",
+    title: "先不要用疲憊定義自己",
+    empathy: "一直懷疑自己真的很累，像心裡有個聲音不停挑錯。",
+    reflection: "那個批評你的聲音，是在描述事實，還是在替焦慮說話？",
+    action: "可以先記下一件你已經做到的小事，哪怕它很小也算數。",
   },
   sleep: {
-    title: "把今晚留給身體，不急著想通全部",
-    empathy: "睡不安穩常常不是你不夠放鬆，而是白天的情緒還沒有被好好放下。",
-    reflection: "你可以問自己，今晚腦中反覆出現的事，真的需要現在解決嗎。",
-    action: "睡前把待辦寫在紙上，做三次慢呼吸，讓明天再接手未完成的事。",
+    title: "今晚先不急著想通全部",
+    empathy: "睡不安穩有時不是你不夠努力，而是心裡還有東西沒放下。",
+    reflection: "腦中反覆出現的那件事，真的需要今晚就處理嗎？",
+    action: "可以把它寫下來，讓明天的你再接手，今晚先留給身體休息。",
   },
 };
 
@@ -79,8 +79,8 @@ export function hasSafetyRisk(text: string) {
 export function crisisResult(): CompanionResult {
   return {
     title: "請先把安全放在第一位",
-    empathy: "你現在的感受可能已經超過一個人獨自承受的範圍，請先讓身邊可信任的人知道。",
-    reflection: "如果你有立即傷害自己的想法，這不是需要獨自整理的問題，而是需要即時協助。",
+    empathy: "你現在的感受可能已經超過一個人獨自承受的範圍。",
+    reflection: "如果有立即傷害自己的想法，請先讓身邊可信任的人知道。",
     action: "請立刻聯絡當地緊急服務、1925 安心專線，或前往最近的急診與安全地點。",
     safety_flag: true,
   };
@@ -118,7 +118,7 @@ export function generateCompanionResult({
       title: `今天抽到「${card.name}」`,
       empathy: card.uprightMeaning,
       reflection: card.reversedMeaning,
-      action: "把這張卡當成整理思緒的提醒，今天只選一件能讓自己更穩的事。",
+      action: "可以把它當成一個提醒：今天先靠近一件讓你比較穩的事。",
       safety_flag: false,
     };
   }
@@ -128,7 +128,7 @@ export function generateCompanionResult({
     empathy: base.empathy,
     reflection: base.reflection,
     action: userInput.trim()
-      ? "把問題拆成一個能在今天處理的小步驟，先照顧最靠近你的那一件事。"
+      ? "不用立刻解決全部。你可以先說說，這件事最卡住的是哪一部分？"
       : base.action,
     safety_flag: false,
   };
