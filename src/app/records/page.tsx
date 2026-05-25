@@ -44,16 +44,48 @@ export default function RecordsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const query = category ? `?category=${category}` : "";
-    fetch(`/api/sessions${query}`)
-      .then(async (response) => {
+    let cancelled = false;
+
+    async function loadRecords() {
+      setLoading(true);
+
+      try {
+        const meResponse = await fetch("/api/auth/me");
+        const meData = await meResponse.json();
+
+        if (!meData.user) {
+          if (!cancelled) {
+            setRecords([]);
+            setError("請先登入。");
+          }
+          return;
+        }
+
+        const query = category ? `?category=${category}` : "";
+        const response = await fetch(`/api/sessions${query}`);
         const data = await response.json();
         if (!response.ok) throw new Error(data.error ?? "載入失敗。");
-        setRecords(data.sessions);
-        setError("");
-      })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
+
+        if (!cancelled) {
+          setRecords(data.sessions);
+          setError("");
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : "載入失敗。");
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void loadRecords();
+
+    return () => {
+      cancelled = true;
+    };
   }, [category]);
 
   async function deleteRecord(id: string) {
