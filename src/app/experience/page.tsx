@@ -1,33 +1,27 @@
 "use client";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   AlertTriangle,
   Bot,
-  Crown,
+  BriefcaseBusiness,
+  Heart,
+  Leaf,
+  Moon,
   RotateCcw,
   Send,
-  Sparkle,
+  Sparkles,
   ThumbsDown,
   ThumbsUp,
   UserRound,
+  Waves,
 } from "lucide-react";
 import { ShuffleDeck } from "@/components/card-visual";
 
-const modes = [
-  ["daily_guidance", "今日指引"],
-  ["emotion_question", "情緒提問"],
-  ["card_draw", "抽卡互動"],
-];
-
-const categories = [
-  ["relationship", "關係"],
-  ["stress", "壓力"],
-  ["career", "方向"],
-  ["self_doubt", "自我懷疑"],
-  ["sleep", "睡眠"],
-];
+type CompanionMode = "daily_guidance" | "emotion_question" | "card_draw";
+type CompanionCategory = "relationship" | "stress" | "career" | "self_doubt" | "sleep";
+type Stage = "setup" | "chat";
 
 type ChatMessage = {
   id: string;
@@ -43,6 +37,40 @@ type UsageState = {
   limit_reached: boolean;
 };
 
+const modes: {
+  value: CompanionMode;
+  label: string;
+  helper: string;
+}[] = [
+  {
+    value: "daily_guidance",
+    label: "今日指引",
+    helper: "不用先整理好問題，也可以先獲得一段溫和的今日提醒。",
+  },
+  {
+    value: "emotion_question",
+    label: "情緒提問",
+    helper: "適合把正在卡住的感受說出來，讓 AI 陪你慢慢釐清。",
+  },
+  {
+    value: "card_draw",
+    label: "抽卡互動",
+    helper: "用一張反思卡當作入口，不做預言，只協助你整理想法。",
+  },
+];
+
+const categories: {
+  value: CompanionCategory;
+  label: string;
+  icon: typeof Heart;
+}[] = [
+  { value: "relationship", label: "關係", icon: Heart },
+  { value: "stress", label: "壓力", icon: Waves },
+  { value: "career", label: "方向", icon: BriefcaseBusiness },
+  { value: "self_doubt", label: "自我懷疑", icon: Leaf },
+  { value: "sleep", label: "睡眠", icon: Moon },
+];
+
 function getGuestToken() {
   const existing = localStorage.getItem("soul_guest_token");
   if (existing) return existing;
@@ -52,9 +80,22 @@ function getGuestToken() {
   return next;
 }
 
+function getWelcomeMessage(mode: CompanionMode) {
+  if (mode === "daily_guidance") {
+    return "我在這裡。你可以先不用說很多，也可以直接送出，讓我陪你整理今天的狀態。";
+  }
+
+  if (mode === "card_draw") {
+    return "我在這裡。你可以說說現在心裡最在意的事，或直接送出，讓這張卡成為今天的反思入口。";
+  }
+
+  return "我在這裡。你可以慢慢說，不需要一次整理好。";
+}
+
 export default function ExperiencePage() {
-  const [mode, setMode] = useState("emotion_question");
-  const [category, setCategory] = useState("stress");
+  const [stage, setStage] = useState<Stage>("setup");
+  const [mode, setMode] = useState<CompanionMode>("emotion_question");
+  const [category, setCategory] = useState<CompanionCategory>("stress");
   const [input, setInput] = useState("");
   const [sessionId, setSessionId] = useState("");
   const [cardName, setCardName] = useState<string | null>(null);
@@ -62,7 +103,7 @@ export default function ExperiencePage() {
     {
       id: "welcome",
       role: "assistant",
-      content: "我在這裡。你可以慢慢說，不需要一次整理好。",
+      content: getWelcomeMessage("emotion_question"),
     },
   ]);
   const [usage, setUsage] = useState<UsageState | null>(null);
@@ -73,16 +114,46 @@ export default function ExperiencePage() {
   const [feedbackSent, setFeedbackSent] = useState<Record<string, string>>({});
   const bottomRef = useRef<HTMLDivElement>(null);
 
+  const selectedMode = useMemo(
+    () => modes.find((item) => item.value === mode) ?? modes[1],
+    [mode],
+  );
+
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages, loading, subscribePrompt, crisisVisible]);
+    if (stage === "chat") {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    }
+  }, [stage, messages, loading, subscribePrompt, crisisVisible]);
+
+  function resetConversation(nextStage: Stage = stage) {
+    setInput("");
+    setSessionId("");
+    setCardName(null);
+    setUsage(null);
+    setError("");
+    setSubscribePrompt(false);
+    setCrisisVisible(false);
+    setFeedbackSent({});
+    setMessages([
+      {
+        id: "welcome",
+        role: "assistant",
+        content: getWelcomeMessage(mode),
+      },
+    ]);
+    setStage(nextStage);
+  }
+
+  function startCompanion() {
+    resetConversation("chat");
+  }
 
   async function sendMessage(event?: FormEvent) {
     event?.preventDefault();
 
     if (loading) return;
     if (mode === "emotion_question" && !input.trim()) {
-      setError("可以先輸入一點想說的話。");
+      setError("情緒提問需要先輸入一點內容，哪怕只有一句也可以。");
       return;
     }
 
@@ -115,7 +186,7 @@ export default function ExperiencePage() {
 
     if (!response.ok) {
       setMessages((items) => items.filter((message) => message.id !== tempUserId));
-      setError(data.error ?? "回應暫時沒有送出，請稍後再試。");
+      setError(data.error ?? "剛剛沒有成功送出，請稍後再試一次。");
       if (data.usage) setUsage(data.usage);
       setSubscribePrompt(Boolean(data.subscribe_prompt));
       if (content) setInput(content);
@@ -164,47 +235,155 @@ export default function ExperiencePage() {
     });
   }
 
-  function resetChat() {
-    setInput("");
-    setSessionId("");
-    setCardName(null);
-    setUsage(null);
-    setError("");
-    setSubscribePrompt(false);
-    setCrisisVisible(false);
-    setFeedbackSent({});
-    setMessages([
-      {
-        id: "welcome",
-        role: "assistant",
-        content: "我在這裡。你可以慢慢說，不需要一次整理好。",
-      },
-    ]);
-  }
-
   const usageText = usage
     ? `今日剩餘 ${usage.remaining}/${usage.limit} 則`
     : "訪客每日 5 則，登入後每日 10 則";
 
+  if (stage === "setup") {
+    return (
+      <main className="mx-auto max-w-3xl px-5 py-8 md:py-12">
+        <section className="rounded-lg border border-[#e6dfd3] bg-[#fffdf7] p-5 shadow-sm md:p-8">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold uppercase text-[#51685a]">Companion Setup</p>
+              <h1 className="mt-2 text-2xl font-semibold text-[#26332d]">先選一個陪伴模式</h1>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-[#6c756d]">
+                這一步只是幫 AI 理解你想用哪種方式開始，選完後再進入陪伴對話。
+              </p>
+            </div>
+            <span className="hidden rounded-full bg-[#eef2ea] px-3 py-1.5 text-xs font-semibold text-[#51685a] sm:inline-flex">
+              低壓力開始
+            </span>
+          </div>
+
+          <fieldset className="mt-7">
+            <legend className="sr-only">陪伴模式</legend>
+            <div className="grid gap-3">
+              {modes.map((item) => (
+                <button
+                  key={item.value}
+                  type="button"
+                  onClick={() => setMode(item.value)}
+                  className={`rounded-lg border px-4 py-4 text-left transition ${
+                    mode === item.value
+                      ? "border-[#51685a] bg-[#d8e2d5] text-[#26332d]"
+                      : "border-[#e6dfd3] bg-white text-[#51685a] hover:border-[#c6c8bb]"
+                  }`}
+                >
+                  <span className="block font-semibold">{item.label}</span>
+                  <span className="mt-1 block text-sm leading-6 text-[#6c756d]">{item.helper}</span>
+                </button>
+              ))}
+            </div>
+          </fieldset>
+
+          <fieldset className="mt-7">
+            <legend className="font-semibold text-[#26332d]">這次比較接近哪一類？</legend>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {categories.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.value}
+                    type="button"
+                    onClick={() => setCategory(item.value)}
+                    className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-semibold transition ${
+                      category === item.value
+                        ? "border-[#51685a] bg-[#51685a] text-white"
+                        : "border-[#e6dfd3] bg-white text-[#51685a] hover:border-[#c6c8bb]"
+                    }`}
+                  >
+                    <Icon size={16} aria-hidden="true" />
+                    {item.label}
+                  </button>
+                );
+              })}
+            </div>
+          </fieldset>
+
+          {mode === "card_draw" && (
+            <div className="mt-7 rounded-lg border border-[#e6dfd3] bg-[#f8f5ee] p-5">
+              <div className="relative mx-auto mb-3 h-24 w-28">
+                <div className="absolute left-1/2 top-1/2 h-20 w-14 -translate-x-1/2 -translate-y-1/2 rotate-[-8deg] rounded-lg border border-[#d8c8b2] bg-[#fffdf7]" />
+                <div className="absolute left-1/2 top-1/2 h-20 w-14 -translate-x-1/2 -translate-y-1/2 rotate-[7deg] rounded-lg border border-[#d8c8b2] bg-[#fffdf7]" />
+                <div className="soul-card-idle absolute left-1/2 top-1/2 grid h-20 w-14 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-lg border border-[#d8c8b2] bg-[#fffdf7] text-[#51685a]">
+                  <Sparkles size={18} aria-hidden="true" />
+                </div>
+              </div>
+              <p className="text-center text-sm leading-6 text-[#6c756d]">
+                抽卡只作為自我反思入口，不代表命運預測。
+              </p>
+            </div>
+          )}
+
+          <div className="mt-7 rounded-lg bg-[#f8f5ee] p-4 text-sm leading-6 text-[#6c756d]">
+            <p className="font-semibold text-[#26332d]">使用界線</p>
+            <p className="mt-1">AI 回覆只用於陪伴與整理，不提供醫療診斷、法律、投資或危機處理。</p>
+          </div>
+
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+            <button
+              type="button"
+              onClick={startCompanion}
+              className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-[#51685a] px-5 py-3 font-semibold text-white hover:bg-[#43574b]"
+            >
+              <Bot size={18} aria-hidden="true" />
+              開始 AI 陪伴
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setMode("emotion_question");
+                setCategory("stress");
+                resetConversation("setup");
+              }}
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#d8c8b2] bg-white px-5 py-3 font-semibold text-[#51685a] hover:bg-[#f8f5ee]"
+            >
+              <RotateCcw size={18} aria-hidden="true" />
+              重新開始
+            </button>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
   return (
-    <main className="mx-auto grid max-w-6xl gap-6 px-5 py-8 lg:grid-cols-[1fr_340px]">
-      <section className="flex min-h-[calc(100vh-9rem)] flex-col rounded-lg border border-[#e6dfd3] bg-[#fffdf7]">
+    <main className="mx-auto max-w-4xl px-5 py-8">
+      <section className="flex min-h-[calc(100vh-11rem)] flex-col overflow-hidden rounded-lg border border-[#e6dfd3] bg-[#fffdf7] shadow-sm">
         <div className="border-b border-[#e6dfd3] p-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="text-sm font-semibold uppercase text-[#51685a]">AI Companion</p>
               <h1 className="mt-2 text-2xl font-semibold text-[#26332d]">開始 AI 陪伴</h1>
+              <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold">
+                <span className="rounded-lg border border-[#d8c8b2] bg-white px-3 py-1.5 text-[#51685a]">
+                  {selectedMode.label}
+                </span>
+                <span className="rounded-lg border border-[#d8c8b2] bg-white px-3 py-1.5 text-[#51685a]">
+                  {categories.find((item) => item.value === category)?.label}
+                </span>
+              </div>
             </div>
-            <span className="rounded-lg border border-[#d8c8b2] bg-white px-3 py-2 text-sm font-semibold text-[#51685a]">
-              {usageText}
-            </span>
+            <div className="flex flex-col items-end gap-2">
+              <span className="rounded-lg border border-[#d8c8b2] bg-white px-3 py-2 text-sm font-semibold text-[#51685a]">
+                {usageText}
+              </span>
+              <button
+                type="button"
+                onClick={() => resetConversation("setup")}
+                className="text-sm font-semibold text-[#51685a] hover:text-[#26332d]"
+              >
+                重新選模式
+              </button>
+            </div>
           </div>
-          <p className="mt-2 text-sm leading-6 text-[#6c756d]">
+          <p className="mt-3 text-sm leading-6 text-[#6c756d]">
             這不是諮商或診斷，而是一段低壓力的情緒整理對話。你可以停在任何地方。
           </p>
           {cardName && (
             <p className="mt-3 inline-flex rounded-lg bg-[#eef2ea] px-3 py-2 text-sm font-semibold text-[#51685a]">
-              本次抽到：{cardName}
+              這次抽到：{cardName}
             </p>
           )}
         </div>
@@ -215,8 +394,10 @@ export default function ExperiencePage() {
               <div className="flex gap-3">
                 <AlertTriangle className="mt-1 shrink-0 text-[#8a3e37]" size={20} aria-hidden="true" />
                 <div className="text-sm leading-6 text-[#8a3e37]">
-                  <p className="font-semibold">如果你現在可能傷害自己或處在立即危險中，請先離開螢幕尋求現場協助。</p>
-                  <p className="mt-1">台灣可撥打 119、110 或 1925 安心專線，也可以請身邊可信任的人陪你前往急診。</p>
+                  <p className="font-semibold">如果你正在考慮傷害自己，請先把安全放在第一位。</p>
+                  <p className="mt-1">
+                    請立即聯絡當地緊急協助、119、1925 安心專線，或找身邊可信任的人陪你。
+                  </p>
                 </div>
               </div>
             </div>
@@ -281,7 +462,7 @@ export default function ExperiencePage() {
           {loading && mode === "card_draw" && !sessionId && (
             <div className="rounded-lg border border-[#e6dfd3] bg-[#f8f5ee] p-5 text-center">
               <ShuffleDeck />
-              <p className="font-semibold text-[#26332d]">正在抽取一張反思卡</p>
+              <p className="font-semibold text-[#26332d]">正在抽出這次的反思卡</p>
             </div>
           )}
 
@@ -291,34 +472,31 @@ export default function ExperiencePage() {
                 <Bot size={20} aria-hidden="true" />
               </span>
               <div className="rounded-lg bg-[#f8f5ee] px-4 py-3 text-sm text-[#6c756d]">
-                正在整理你的訊息...
+                正在陪你整理...
               </div>
             </div>
           )}
 
           {subscribePrompt && (
             <div className="rounded-lg border border-[#8da892] bg-[#eef2ea] p-4">
-              <div className="flex items-start gap-3">
-                <Crown className="mt-1 shrink-0 text-[#51685a]" size={20} aria-hidden="true" />
-                <div>
-                  <h2 className="font-semibold text-[#26332d]">這段對話可以被好好保存</h2>
-                  <p className="mt-2 text-sm leading-6 text-[#6c756d]">
-                    註冊後可以保存紀錄。Plus 訂閱目前只做方案展示，下一版再接付款與更長期的陪伴功能。
-                  </p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <Link
-                      href="/auth?mode=register&redirect=/records"
-                      className="rounded-lg bg-[#51685a] px-4 py-2 text-sm font-semibold text-white"
-                    >
-                      註冊保存
-                    </Link>
-                    <Link
-                      href="/plans"
-                      className="rounded-lg border border-[#d8c8b2] bg-white px-4 py-2 text-sm font-semibold text-[#51685a]"
-                    >
-                      查看方案
-                    </Link>
-                  </div>
+              <div>
+                <h2 className="font-semibold text-[#26332d]">這段陪伴可以先保存下來</h2>
+                <p className="mt-2 text-sm leading-6 text-[#6c756d]">
+                  註冊後可以把紀錄留在我的紀錄中；Plus 方案會在之後開放更多保存與回看功能。
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Link
+                    href="/auth?mode=register&redirect=/records"
+                    className="rounded-lg bg-[#51685a] px-4 py-2 text-sm font-semibold text-white"
+                  >
+                    註冊保存
+                  </Link>
+                  <Link
+                    href="/plans"
+                    className="rounded-lg border border-[#d8c8b2] bg-white px-4 py-2 text-sm font-semibold text-[#51685a]"
+                  >
+                    查看方案
+                  </Link>
                 </div>
               </div>
             </div>
@@ -345,8 +523,14 @@ export default function ExperiencePage() {
               }}
               rows={2}
               maxLength={500}
-              placeholder={mode === "daily_guidance" ? "可以留白，直接開始今日指引" : "把現在卡住的一小段感受寫下來"}
-              className="min-h-14 flex-1 resize-none rounded-lg border border-[#d8c8b2] bg-white px-4 py-3 text-sm leading-6 text-[#26332d] placeholder:text-[#9aa39c]"
+              placeholder={
+                mode === "daily_guidance"
+                  ? "可以留空，或寫下今天的一點感受"
+                  : mode === "card_draw"
+                    ? "可以留空抽卡，或寫下想反思的事"
+                    : "把現在卡住的一小段感受寫下來"
+              }
+              className="min-h-14 flex-1 resize-none rounded-lg border border-[#d8c8b2] bg-white px-4 py-3 text-sm leading-6 text-[#26332d] placeholder:text-[#9aa39c] focus:border-[#51685a] focus:outline-none"
             />
             <button
               type="submit"
@@ -361,91 +545,6 @@ export default function ExperiencePage() {
           <p className="mt-2 text-right text-xs text-[#6c756d]">{input.length}/500</p>
         </form>
       </section>
-
-      <aside className="rounded-lg border border-[#e6dfd3] bg-[#fffdf7] p-5 lg:sticky lg:top-24 lg:h-fit">
-        <div className="grid gap-6">
-          <fieldset>
-            <legend className="mb-3 font-semibold text-[#26332d]">陪伴模式</legend>
-            <div className="grid gap-3">
-              {modes.map(([value, label]) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => {
-                    setMode(value);
-                    resetChat();
-                  }}
-                  className={`rounded-lg border px-4 py-3 text-left font-medium ${
-                    mode === value
-                      ? "border-[#51685a] bg-[#d8e2d5] text-[#26332d]"
-                      : "border-[#e6dfd3] bg-white text-[#51685a]"
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </fieldset>
-
-          {mode === "card_draw" && (
-            <section className="rounded-lg border border-[#e6dfd3] bg-[#f8f5ee] p-5">
-              <div className="relative h-32">
-                <div className="absolute left-1/2 top-1/2 h-28 w-20 -translate-x-1/2 -translate-y-1/2 rotate-[-8deg] rounded-lg border border-[#d8c8b2] bg-[#fffdf7]" />
-                <div className="absolute left-1/2 top-1/2 h-28 w-20 -translate-x-1/2 -translate-y-1/2 rotate-[7deg] rounded-lg border border-[#d8c8b2] bg-[#fffdf7]" />
-                <div className="soul-card-idle absolute left-1/2 top-1/2 grid h-28 w-20 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-lg border border-[#d8c8b2] bg-[#fffdf7] text-[#51685a]">
-                  <Sparkle size={22} aria-hidden="true" />
-                </div>
-              </div>
-              <p className="text-sm leading-6 text-[#6c756d]">
-                卡片只作為自我反思的提示，不做命運預測。送出後系統會隨機抽一張。
-              </p>
-            </section>
-          )}
-
-          <fieldset>
-            <legend className="mb-3 font-semibold text-[#26332d]">這次比較接近哪一類？</legend>
-            <div className="flex flex-wrap gap-2">
-              {categories.map(([value, label]) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => setCategory(value)}
-                  className={`rounded-lg border px-4 py-2 text-sm font-medium ${
-                    category === value
-                      ? "border-[#51685a] bg-[#51685a] text-white"
-                      : "border-[#e6dfd3] bg-white text-[#51685a]"
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </fieldset>
-
-          <div className="rounded-lg bg-[#f8f5ee] p-4 text-sm leading-6 text-[#6c756d]">
-            <p className="font-semibold text-[#26332d]">使用界線</p>
-            <p className="mt-1">AI 回覆只用於陪伴與整理，不提供醫療診斷、法律、投資或危機處理。</p>
-          </div>
-
-          <button
-            type="button"
-            onClick={resetChat}
-            className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#d8c8b2] bg-white px-5 py-3 font-semibold text-[#51685a] hover:bg-[#f8f5ee]"
-          >
-            <RotateCcw size={18} aria-hidden="true" />
-            重新開始
-          </button>
-
-          {sessionId && (
-            <Link
-              href={`/result/${sessionId}`}
-              className="rounded-lg bg-[#51685a] px-5 py-3 text-center font-semibold text-white hover:bg-[#43574b]"
-            >
-              查看本次整理
-            </Link>
-          )}
-        </div>
-      </aside>
     </main>
   );
 }
