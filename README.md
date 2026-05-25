@@ -6,7 +6,7 @@ Soul Oasis 是一個 AI 情緒陪伴與自我整理網站 MVP。它不是算命�
 
 > 讓使用者願意安心地繼續說下去。
 
-Version: 1.3 GPT API 陪伴對話與額度控管版
+Version: 1.4 PostgreSQL 持久化資料庫版
 
 ## 專案目標
 
@@ -76,8 +76,8 @@ AI 必須維持一致人格：
 - Auth: 自建 Email / Password + JWT httpOnly cookie
 - Password Hash: bcryptjs
 - AI: OpenAI Responses API
-- Database: Prisma schema + SQLite local MVP
-- ORM Client: Prisma 7 + better-sqlite3 adapter
+- Database: Supabase / PostgreSQL
+- ORM Client: Prisma 7 + PostgreSQL adapter
 - Icons: lucide-react
 
 ## 本機開發
@@ -88,7 +88,7 @@ AI 必須維持一致人格：
 npm install
 ```
 
-建立本機 SQLite 資料庫與卡片種子資料：
+建立 PostgreSQL 資料表與卡片種子資料：
 
 ```bash
 npm run db:setup
@@ -103,6 +103,8 @@ cp .env.example .env.local
 至少需要：
 
 ```bash
+DATABASE_URL="你的 Supabase PostgreSQL 連線字串"
+DIRECT_URL="你的 Supabase migration/direct 連線字串"
 OPENAI_API_KEY="你的 OpenAI API Key"
 OPENAI_MODEL="gpt-5.4-mini"
 JWT_SECRET="一段夠長的隨機字串"
@@ -128,6 +130,7 @@ npm run build
 npm run lint
 npm run db:setup
 npm run prisma:generate
+npm run prisma:seed
 ```
 
 ## 資料庫說明
@@ -142,13 +145,7 @@ npm run prisma:generate
 - `subscriptions`
 - `feedback`
 
-本機資料庫檔案為：
-
-```bash
-prisma/dev.db
-```
-
-此檔案已加入 `.gitignore`，不會被提交到 GitHub。
+網站 runtime 透過 `DATABASE_URL` 使用 Supabase connection pooling。Prisma CLI migration 透過 `DIRECT_URL` 使用 direct/session connection。正式部署前需先執行 migration 與 seed，讓資料表和 20 張反思卡建立完成。
 
 ## 重要限制
 
@@ -179,11 +176,11 @@ Soul Oasis 僅提供情緒陪伴、自我反思與紀錄整理，不構成醫療
 - ORM: Prisma
 - Auth: 可維持自建 JWT，或後續改 Supabase Auth
 
-目前 MVP 使用 SQLite 方便本機快速驗證；若要正式上線，建議改接 PostgreSQL。
+目前 MVP 已改為 PostgreSQL，適合保存會員、對話紀錄、額度與回饋資料。
 
 ## 關於「訓練陪伴師」
 
-目前 v1.2 先用 system prompt 固定陪伴師人格，不直接 fine-tune。
+目前先用 system prompt 固定陪伴師人格，不直接 fine-tune。
 
 原因：
 
