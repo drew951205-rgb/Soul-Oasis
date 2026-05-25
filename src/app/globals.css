@@ -86,3 +86,25 @@ select {
 .soul-card-idle {
   animation: soul-card-idle 2.4s ease-in-out infinite;
 }
+
+@keyframes soul-home-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-14px);
+  }
+}
+
+.soul-floating {
+  animation: soul-home-float 6s ease-in-out infinite;
+}
+
+.soul-floating-delayed {
+  animation: soul-home-float 6.6s ease-in-out 0.7s infinite;
+}
+
+.soul-floating-slow {
+  animation: soul-home-float 7.2s ease-in-out 1.4s infinite;
+}

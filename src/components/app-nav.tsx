@@ -29,17 +29,20 @@ export function AppNav() {
 
   const links = (
     <>
-      <Link href="/experience" className="text-sm font-medium text-[#51685a] hover:text-[#26332d]">
+      <Link href="/" className="text-sm font-semibold text-[#51685a] hover:text-[#26332d]">
+        首頁
+      </Link>
+      <Link href="/experience" className="text-sm font-semibold text-[#51685a] hover:text-[#26332d]">
         開始 AI 陪伴
       </Link>
-      <Link href="/plans" className="text-sm font-medium text-[#51685a] hover:text-[#26332d]">
+      <Link href="/plans" className="text-sm font-semibold text-[#51685a] hover:text-[#26332d]">
         方案
       </Link>
-      <Link href="/legal" className="text-sm font-medium text-[#51685a] hover:text-[#26332d]">
+      <Link href="/legal" className="text-sm font-semibold text-[#51685a] hover:text-[#26332d]">
         規範中心
       </Link>
       {user && (
-        <Link href="/records" className="text-sm font-medium text-[#51685a] hover:text-[#26332d]">
+        <Link href="/records" className="text-sm font-semibold text-[#51685a] hover:text-[#26332d]">
           我的紀錄
         </Link>
       )}
@@ -47,8 +50,8 @@ export function AppNav() {
   );
 
   return (
-    <header className="sticky top-0 z-40 border-b border-[#e6dfd3] bg-[#f8f5ee]/90 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5">
+    <header className="sticky top-0 z-40 border-b border-[#e6dfd3]/80 bg-[#fbf9f4]/90 backdrop-blur">
+      <div className="mx-auto flex h-20 max-w-6xl items-center justify-between px-5">
         <Link href="/" className="flex items-center gap-2 font-semibold text-[#26332d]">
           <span className="grid size-9 place-items-center rounded-lg bg-[#d8e2d5] text-[#51685a]">
             <Sprout size={19} aria-hidden="true" />
@@ -78,7 +81,7 @@ export function AppNav() {
           ) : (
             <Link
               href="/auth"
-              className="rounded-lg bg-[#51685a] px-4 py-2 text-sm font-semibold text-white hover:bg-[#43574b]"
+              className="rounded-full border border-[#c6c8bb] bg-[#fbf9f4] px-5 py-2.5 text-sm font-semibold text-[#51685a] hover:bg-white"
             >
               登入 / 註冊
             </Link>
