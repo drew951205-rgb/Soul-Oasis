@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
   const limited = rateLimit(request, 40);
 
   if (!limited.ok) {
-    return NextResponse.json({ error: "訊息太頻繁，請稍後再試。" }, { status: 429 });
+    return NextResponse.json({ error: "請稍後再試，訊息送出太頻繁了。" }, { status: 429 });
   }
 
   const body = await request.json().catch(() => null);
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
   const guestToken = String(body?.guest_token ?? "").trim() || randomUUID();
 
   if (!isSessionMode(mode) || !isSessionCategory(category)) {
-    return NextResponse.json({ error: "模式或主題不正確。" }, { status: 400 });
+    return NextResponse.json({ error: "陪伴模式或分類不正確。" }, { status: 400 });
   }
 
   if (mode !== "daily_guidance" && mode !== "card_draw" && !content) {
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (rawContent.length > 500) {
-    return NextResponse.json({ error: "單次訊息最多 500 字。" }, { status: 400 });
+    return NextResponse.json({ error: "訊息最多 500 字。" }, { status: 400 });
   }
 
   const db = getDb();
@@ -42,7 +42,9 @@ export async function POST(request: NextRequest) {
   if (usageBefore.limit_reached && !safetyFlag) {
     return NextResponse.json(
       {
-        error: user ? "今日免費訊息額度已用完。" : "訪客免費訊息已用完，註冊後可以保存並繼續使用。",
+        error: user
+          ? "今日可用訊息已用完。"
+          : "訪客今日可用訊息已用完，註冊後可以獲得更多每日訊息數。",
         usage: {
           ...usageBefore,
           remaining_messages: usageBefore.remaining,
@@ -77,6 +79,8 @@ export async function POST(request: NextRequest) {
         responseEmpathy: "",
         responseReflection: "",
         responseAction: "",
+        title: "AI 陪伴對話",
+        metadata: { source: "ai_chat" },
         safetyFlag: false,
       },
       include: { card: { select: { id: true, name: true } } },
@@ -87,7 +91,7 @@ export async function POST(request: NextRequest) {
     data: {
       sessionId: session.id,
       role: "user",
-      content: content || "我現在不知道該說什麼。",
+      content: content || "我想先從今日指引開始。",
       safetyFlag,
     },
   });
@@ -115,10 +119,7 @@ export async function POST(request: NextRequest) {
     },
   });
 
-  const usageAfter = safetyFlag
-    ? usageBefore
-    : await incrementUsage({ user, guestToken });
-
+  const usageAfter = safetyFlag ? usageBefore : await incrementUsage({ user, guestToken });
   const userMessageCount = await db.chatMessage.count({
     where: { sessionId: session.id, role: "user" },
   });
@@ -128,10 +129,12 @@ export async function POST(request: NextRequest) {
     data: {
       userInput: content || session.userInput,
       responseTitle: "AI 陪伴對話",
+      title: "AI 陪伴對話",
       responseEmpathy: reply,
-      responseReflection: userMessageCount >= 3 ? "你們已經聊了一小段，可以回頭看看自己反覆提到的感受。" : "",
+      responseReflection:
+        userMessageCount >= 3 ? "你們已經聊了一小段，可以回頭看看自己反覆提到的感受。" : "",
       responseAction: shouldShowSubscriptionPrompt(userMessageCount, Boolean(user))
-        ? "若想保留完整對話紀錄，可以註冊或升級方案。"
+        ? "這段對話可以先保存下來，之後回看時會更容易看見自己的狀態變化。"
         : "",
       safetyFlag: session.safetyFlag || safetyFlag,
     },

@@ -35,9 +35,9 @@ export async function POST(
   }
 
   const userMessageCount = session.messages.filter((message) => message.role === "user").length;
-  if (userMessageCount < 2 && !session.safetyFlag) {
+  if (userMessageCount < 5 && !session.safetyFlag) {
     return NextResponse.json(
-      { error: "再聊一點點後，就可以整理本次對話。" },
+      { error: "再多聊幾句後，就可以整理本次對話。" },
       { status: 400 },
     );
   }
@@ -48,6 +48,7 @@ export async function POST(
     where: { id: session.id },
     data: {
       responseTitle: summary.title,
+      title: summary.title,
       responseEmpathy: summary.focus,
       responseReflection: summary.timeline.map((item) => `${item.label}：${item.text}`).join("\n"),
       responseAction: summary.next_step,

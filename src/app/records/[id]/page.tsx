@@ -4,20 +4,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ArrowLeft, FileText, Trash2 } from "lucide-react";
-
-const modeLabels: Record<string, string> = {
-  daily_guidance: "今日指引",
-  emotion_question: "情緒提問",
-  card_draw: "抽卡互動",
-};
-
-const categoryLabels: Record<string, string> = {
-  relationship: "關係",
-  stress: "壓力",
-  career: "方向",
-  self_doubt: "自我懷疑",
-  sleep: "睡眠",
-};
+import { getCategoryLabel, getModeLabel } from "@/config/labels";
 
 type SessionDetail = {
   id: string;
@@ -110,8 +97,8 @@ export default function RecordDetailPage() {
         </div>
 
         <div className="mt-5 flex flex-wrap gap-2 text-sm text-[#51685a]">
-          <span className="rounded-lg bg-[#eef2ea] px-3 py-2">{modeLabels[session.mode]}</span>
-          <span className="rounded-lg bg-[#eef2ea] px-3 py-2">{categoryLabels[session.category]}</span>
+          <span className="rounded-lg bg-[#eef2ea] px-3 py-2">{getModeLabel(session.mode)}</span>
+          <span className="rounded-lg bg-[#eef2ea] px-3 py-2">{getCategoryLabel(session.category)}</span>
           {session.mood_score && <span className="rounded-lg bg-[#eef2ea] px-3 py-2">心情 {session.mood_score}/5</span>}
           {session.card_name && <span className="rounded-lg bg-[#eef2ea] px-3 py-2">抽到 {session.card_name}</span>}
           {session.summary.has_summary && (

@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AlertTriangle, ArrowRight, RefreshCcw, Save } from "lucide-react";
 import { CardVisual } from "@/components/card-visual";
+import { getCategoryLabel, getModeLabel } from "@/config/labels";
 
 type SessionDetail = {
   id: string;
@@ -28,20 +29,6 @@ type SessionDetail = {
   }[];
 };
 
-const modeLabels: Record<string, string> = {
-  daily_guidance: "今日指引",
-  emotion_question: "情緒提問",
-  card_draw: "抽卡互動",
-};
-
-const categoryLabels: Record<string, string> = {
-  relationship: "感情",
-  stress: "壓力",
-  career: "人生方向",
-  self_doubt: "自我懷疑",
-  sleep: "睡眠",
-};
-
 export default function ResultPage() {
   const params = useParams<{ id: string }>();
   const [session, setSession] = useState<SessionDetail | null>(null);
@@ -58,13 +45,13 @@ export default function ResultPage() {
     ])
       .then(([sessionData, meData]) => {
         if (!sessionData.session) {
-          setError(sessionData.error ?? "找不到這次結果。");
+          setError(sessionData.error ?? "找不到這次紀錄。");
           return;
         }
         setSession(sessionData.session);
         setUser(meData.user);
       })
-      .catch(() => setError("載入失敗，請稍後再試。"));
+      .catch(() => setError("讀取失敗，請稍後再試。"));
   }, [params.id]);
 
   if (error) {
@@ -78,7 +65,7 @@ export default function ResultPage() {
   }
 
   if (!session) {
-    return <main className="mx-auto max-w-3xl px-5 py-16 text-[#6c756d]">載入中...</main>;
+    return <main className="mx-auto max-w-3xl px-5 py-16 text-[#6c756d]">讀取中...</main>;
   }
 
   return (
@@ -87,18 +74,18 @@ export default function ResultPage() {
         <div className="mb-6 flex gap-3 rounded-lg border border-[#d9a6a0] bg-[#fff6f3] p-4 text-[#8a3e37]">
           <AlertTriangle className="shrink-0" size={22} aria-hidden="true" />
           <p className="text-sm leading-6">
-            若你正處於立即危險，請立刻聯絡當地緊急服務、1925 安心專線，或前往最近急診。
+            這次內容可能涉及立即安全風險。請優先聯絡當地緊急協助、119、110、1925 安心專線，或找可信任的人陪你。
           </p>
         </div>
       )}
 
       <section className="rounded-lg border border-[#e6dfd3] bg-[#fffdf7] p-5 sm:p-8">
         <p className="text-sm font-semibold uppercase text-[#51685a]">Conversation Summary</p>
-        <h1 className="mt-3 text-3xl font-semibold text-[#26332d]">本次對話整理</h1>
+        <h1 className="mt-3 text-3xl font-semibold text-[#26332d]">{session.result.title}</h1>
 
         <div className="mt-5 flex flex-wrap gap-2 text-sm text-[#51685a]">
-          <span className="rounded-lg bg-[#eef2ea] px-3 py-2">{categoryLabels[session.category]}</span>
-          <span className="rounded-lg bg-[#eef2ea] px-3 py-2">{modeLabels[session.mode]}</span>
+          <span className="rounded-lg bg-[#eef2ea] px-3 py-2">{getCategoryLabel(session.category)}</span>
+          <span className="rounded-lg bg-[#eef2ea] px-3 py-2">{getModeLabel(session.mode)}</span>
           {session.mood_score && (
             <span className="rounded-lg bg-[#eef2ea] px-3 py-2">心情 {session.mood_score}/5</span>
           )}
@@ -114,7 +101,7 @@ export default function ResultPage() {
               <p className="text-sm font-semibold uppercase text-[#51685a]">Drawn Card</p>
               <h2 className="mt-2 text-2xl font-semibold text-[#26332d]">{session.card_name}</h2>
               <p className="mt-3 leading-7 text-[#6c756d]">
-                這張卡是本次陪伴的反思提示，請把它當成整理情緒的入口，而不是預言或指令。
+                這張卡只作為反思入口，不代表預言或診斷。
               </p>
             </div>
           </section>
@@ -122,7 +109,7 @@ export default function ResultPage() {
 
         {session.messages.length > 0 ? (
           <section className="mt-8 rounded-lg border border-[#e6dfd3] bg-white p-5">
-            <h2 className="font-semibold text-[#26332d]">完整對話</h2>
+            <h2 className="font-semibold text-[#26332d]">對話內容</h2>
             <div className="mt-4 space-y-4">
               {session.messages.map((message) => (
                 <div
@@ -172,7 +159,7 @@ export default function ResultPage() {
               className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#51685a] px-5 py-3 font-semibold text-white hover:bg-[#43574b]"
             >
               <Save size={18} aria-hidden="true" />
-              註冊即可保存這次紀錄
+              註冊即可保存紀錄
             </Link>
           )}
           <Link
@@ -187,7 +174,7 @@ export default function ResultPage() {
 
       <section className="mt-5 rounded-lg border border-[#e6dfd3] bg-[#f8f5ee] p-4">
         <p className="text-sm leading-6 text-[#6c756d]">
-          Soul Oasis 提供自我整理與陪伴，不提供醫療診斷、治療、法律、投資或醫療建議。
+          Soul Oasis 只提供情緒整理與自我反思，不提供醫療診斷、治療、法律或投資建議。
           <Link href="/legal" className="ml-1 inline-flex items-center gap-1 font-semibold text-[#51685a]">
             查看規範
             <ArrowRight size={14} aria-hidden="true" />

@@ -67,12 +67,18 @@ model Session {
   responseReflection String          @map("response_reflection")
   responseAction     String          @map("response_action")
   safetyFlag         Boolean         @default(false) @map("safety_flag")
+  title              String?
+  tags               String[]        @default([])
+  emotionScore       Int?            @map("emotion_score")
+  isPublic           Boolean         @default(false) @map("is_public")
+  metadata           Json?
   createdAt          DateTime        @default(now()) @map("created_at")
   card               Card?           @relation(fields: [cardId], references: [id])
   messages           ChatMessage[]
   user               User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
+  @@index([userId, isPublic, createdAt])
   @@index([guestToken])
   @@map("sessions")
 }
@@ -83,6 +89,9 @@ model ChatMessage {
   role      String
   content   String
   safetyFlag Boolean @default(false) @map("safety_flag")
+  isEdited  Boolean  @default(false) @map("is_edited")
+  editedAt  DateTime? @map("edited_at")
+  aiConfidence Float? @map("ai_confidence")
   createdAt DateTime @default(now()) @map("created_at")
   session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   feedback  Feedback[]

@@ -110,6 +110,9 @@ export async function POST(request: NextRequest) {
       responseEmpathy: result.empathy,
       responseReflection: result.reflection,
       responseAction: result.action,
+      title: result.title,
+      emotionScore: moodScore,
+      metadata: { source: "fixed_result" },
       safetyFlag: result.safety_flag,
     },
   });

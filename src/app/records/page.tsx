@@ -3,29 +3,9 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { FileText, MessageCircle, Plus, Trash2 } from "lucide-react";
+import { categoryOptions, getCategoryLabel, getModeLabel } from "@/config/labels";
 
-const categories = [
-  ["", "全部"],
-  ["relationship", "關係"],
-  ["stress", "壓力"],
-  ["career", "方向"],
-  ["self_doubt", "自我懷疑"],
-  ["sleep", "睡眠"],
-];
-
-const modeLabels: Record<string, string> = {
-  daily_guidance: "今日指引",
-  emotion_question: "情緒提問",
-  card_draw: "抽卡互動",
-};
-
-const categoryLabels: Record<string, string> = {
-  relationship: "關係",
-  stress: "壓力",
-  career: "方向",
-  self_doubt: "自我懷疑",
-  sleep: "睡眠",
-};
+const categories = [{ value: "", label: "全部" }, ...categoryOptions];
 
 type RecordItem = {
   id: string;
@@ -158,7 +138,7 @@ export default function RecordsPage() {
       </section>
 
       <div className="mb-6 flex flex-wrap gap-2">
-        {categories.map(([value, label]) => (
+        {categories.map(({ value, label }) => (
           <button
             key={value}
             type="button"
@@ -200,8 +180,8 @@ export default function RecordsPage() {
                   <Link href={`/records/${record.id}`} className="block">
                     <div className="flex flex-wrap gap-2 text-xs font-semibold text-[#51685a]">
                       <span>{new Date(record.created_at).toLocaleString("zh-TW")}</span>
-                      <span>{modeLabels[record.mode]}</span>
-                      <span>{categoryLabels[record.category]}</span>
+                      <span>{getModeLabel(record.mode)}</span>
+                      <span>{getCategoryLabel(record.category)}</span>
                       {record.mood_score && <span>心情 {record.mood_score}/5</span>}
                       {record.has_summary && (
                         <span className="inline-flex items-center gap-1 rounded-full bg-[#eef2ea] px-2 py-0.5">

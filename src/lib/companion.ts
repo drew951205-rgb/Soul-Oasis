@@ -1,32 +1,41 @@
 import type { SessionCategory, SessionMode } from "@/generated/prisma/enums";
 import type { CardModel } from "@/generated/prisma/models/Card";
+import {
+  categoryLabels,
+  isCompanionCategory,
+  isCompanionMode,
+  modeLabels,
+} from "@/config/labels";
 
-export const modeLabels: Record<SessionMode, string> = {
-  daily_guidance: "今日指引",
-  emotion_question: "情緒提問",
-  card_draw: "抽卡互動",
-};
-
-export const categoryLabels: Record<SessionCategory, string> = {
-  relationship: "感情",
-  stress: "壓力",
-  career: "人生方向",
-  self_doubt: "自我懷疑",
-  sleep: "睡眠",
-};
+export { categoryLabels, modeLabels };
 
 export const sensitiveTerms = [
   "自殺",
+  "自盡",
   "輕生",
   "自殘",
   "自傷",
-  "想死",
-  "想消失",
+  "割腕",
+  "燒炭",
+  "上吊",
+  "跳樓",
   "活不下去",
+  "想消失",
   "不想活",
   "結束生命",
-  "了結自己",
 ];
+
+const falsePositiveContexts = [
+  "不想消失在大家面前",
+  "怕自己消失",
+  "自殘式加班",
+  "想消失一下",
+];
+
+const intentTerms = ["自殺", "自盡", "輕生", "不想活", "活不下去", "結束生命"];
+const selfHarmTerms = ["自殘", "自傷", "割腕"];
+const urgencyTerms = ["現在", "今晚", "今天", "馬上", "立刻", "撐不下去"];
+const methodTerms = ["燒炭", "上吊", "跳樓", "刀", "藥", "繩子"];
 
 export type CompanionResult = {
   title: string;
@@ -41,47 +50,64 @@ const categoryCopy: Record<
   { title: string; empathy: string; reflection: string; action: string }
 > = {
   relationship: {
-    title: "先聽見你在意的那一塊",
-    empathy: "聽起來，這段關係裡有些感受被你放在心裡一陣子了。",
-    reflection: "此刻你比較需要被理解，還是需要一點距離讓自己安靜下來？",
-    action: "可以先不用急著回應誰，讓自己的感受有一個清楚的位置。",
+    title: "先看見關係裡真正累的地方",
+    empathy: "你在意這段關係，所以才會反覆想著那些沒有被好好接住的感受。",
+    reflection: "可以先分辨，現在最痛的是事件本身，還是你覺得自己不被理解。",
+    action: "今天先不急著定義關係，寫下一句你真正想被聽見的話就好。",
   },
   stress: {
-    title: "先讓壓力有地方放下來",
-    empathy: "感覺你最近承接了不少事，心裡可能一直沒有真正停下來。",
-    reflection: "現在最讓你喘不過氣的，是事情本身，還是一直不能放鬆的感覺？",
-    action: "今天只挑一件最小的事就好，剩下的可以晚一點再整理。",
+    title: "先讓壓力有一個可以放下的位置",
+    empathy: "你像是同時背著很多件事，身體和心裡都已經很用力了。",
+    reflection: "可以問問自己，這份壓力是來自事情本身，還是來自害怕失控。",
+    action: "先選一件最小的事完成，其他事情暫時不要一起扛在身上。",
   },
   career: {
-    title: "方向可以先不用一次確定",
-    empathy: "你不是沒有想法，而是每個選擇好像都帶著重量。",
-    reflection: "如果先不管別人的期待，哪個方向讓你比較能呼吸？",
-    action: "可以先用一個小嘗試靠近它，不必把今天的選擇變成永遠。",
+    title: "迷惘時先不用急著做出答案",
+    empathy: "你不是沒有方向，而是眼前的選項都帶著重量，所以很難輕鬆決定。",
+    reflection: "可以先觀察，哪個選擇讓你比較接近想成為的自己，而不是只避開害怕。",
+    action: "今天先列出一個可嘗試的小行動，不需要立刻承諾整條路。",
   },
   self_doubt: {
-    title: "先不要用疲憊定義自己",
-    empathy: "一直懷疑自己真的很累，像心裡有個聲音不停挑錯。",
-    reflection: "那個批評你的聲音，是在描述事實，還是在替焦慮說話？",
-    action: "可以先記下一件你已經做到的小事，哪怕它很小也算數。",
+    title: "把自我懷疑放慢一點看",
+    empathy: "一直檢查自己是不是夠好，其實會讓心裡很疲憊。",
+    reflection: "你可以分辨，這是事實上的不足，還是長期習慣用嚴格眼光看自己。",
+    action: "先記下一件你已經完成的小事，讓自己不要只看見缺口。",
   },
   sleep: {
-    title: "今晚先不急著想通全部",
-    empathy: "睡不安穩有時不是你不夠努力，而是心裡還有東西沒放下。",
-    reflection: "腦中反覆出現的那件事，真的需要今晚就處理嗎？",
-    action: "可以把它寫下來，讓明天的你再接手，今晚先留給身體休息。",
+    title: "睡前先把心放回安靜的位置",
+    empathy: "夜晚容易讓白天沒整理完的情緒浮上來，這不是你太脆弱。",
+    reflection: "可以觀察，現在腦中反覆出現的是待辦、擔心，還是沒有說出口的感受。",
+    action: "先把明天再處理的事寫下來，讓身體知道今晚可以暫時休息。",
   },
 };
 
+function includesAny(text: string, terms: string[]) {
+  return terms.some((term) => text.includes(term));
+}
+
 export function hasSafetyRisk(text: string) {
-  return sensitiveTerms.some((term) => text.includes(term));
+  const normalized = text.toLowerCase().replace(/\s+/g, "");
+  if (!normalized) return false;
+  if (!includesAny(normalized, sensitiveTerms)) return false;
+
+  if (falsePositiveContexts.some((context) => normalized.includes(context))) {
+    return false;
+  }
+
+  const hasIntent = includesAny(normalized, intentTerms);
+  const hasSelfHarm = includesAny(normalized, selfHarmTerms);
+  const hasUrgency = includesAny(normalized, urgencyTerms);
+  const hasMethod = includesAny(normalized, methodTerms);
+
+  return hasIntent || (hasSelfHarm && (hasUrgency || hasMethod));
 }
 
 export function crisisResult(): CompanionResult {
   return {
     title: "請先把安全放在第一位",
-    empathy: "你現在的感受可能已經超過一個人獨自承受的範圍。",
-    reflection: "如果有立即傷害自己的想法，請先讓身邊可信任的人知道。",
-    action: "請立刻聯絡當地緊急服務、1925 安心專線，或前往最近的急診與安全地點。",
+    empathy: "你現在承受的痛苦可能已經超過一個人能獨自消化的程度。",
+    reflection: "此刻最重要的不是分析原因，而是讓身邊出現真實、能立即回應的人。",
+    action: "請立即聯絡當地緊急協助、119、110、1925 安心專線，或請可信任的人陪你前往急診。",
     safety_flag: true,
   };
 }
@@ -104,21 +130,15 @@ export function generateCompanionResult({
   const base = categoryCopy[category];
 
   if (mode === "daily_guidance") {
-    return {
-      title: base.title,
-      empathy: base.empathy,
-      reflection: base.reflection,
-      action: base.action,
-      safety_flag: false,
-    };
+    return { ...base, safety_flag: false };
   }
 
   if (mode === "card_draw" && card) {
     return {
-      title: `今天抽到「${card.name}」`,
+      title: `這次抽到：${card.name}`,
       empathy: card.uprightMeaning,
       reflection: card.reversedMeaning,
-      action: "可以把它當成一個提醒：今天先靠近一件讓你比較穩的事。",
+      action: "把這張卡當作反思入口，先寫下一句你此刻最想承認的感受。",
       safety_flag: false,
     };
   }
@@ -128,16 +148,16 @@ export function generateCompanionResult({
     empathy: base.empathy,
     reflection: base.reflection,
     action: userInput.trim()
-      ? "不用立刻解決全部。你可以先說說，這件事最卡住的是哪一部分？"
+      ? "先不用急著解決全部，今晚只挑一個最小、最不耗力的下一步。"
       : base.action,
     safety_flag: false,
   };
 }
 
 export function isSessionMode(value: string): value is SessionMode {
-  return ["daily_guidance", "emotion_question", "card_draw"].includes(value);
+  return isCompanionMode(value);
 }
 
 export function isSessionCategory(value: string): value is SessionCategory {
-  return ["relationship", "stress", "career", "self_doubt", "sleep"].includes(value);
+  return isCompanionCategory(value);
 }

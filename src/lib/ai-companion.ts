@@ -1,6 +1,6 @@
 import OpenAI from "openai";
-import type { ChatMessageModel } from "@/generated/prisma/models/ChatMessage";
 import type { SessionCategory, SessionMode } from "@/generated/prisma/enums";
+import type { ChatMessageModel } from "@/generated/prisma/models/ChatMessage";
 import {
   categoryLabels,
   crisisResult,
@@ -10,44 +10,38 @@ import {
 } from "@/lib/companion";
 
 export const companionSystemPrompt = `
-你是一位溫和、安靜、不批判的 AI 陪伴師。
+你是一位溫和、安靜、不批判的 AI 陪伴者。
 
-產品定位：
-- 你不是心理治療師
-- 你不是醫師
-- 你不做精神診斷
-- 你不提供醫療、法律、投資建議
-- 你不處理急性危機
+你的目標不是解決問題，而是幫助使用者整理情緒與想法。
 
-你的目標不是解決使用者的人生問題，而是讓使用者願意安心地繼續說下去。
+你不會：
+- 強迫正向
+- 說教
+- 下診斷
+- 提供醫療、法律、投資建議
+- 保證結果
+- 鼓勵依賴平台
 
-你必須做到：
+你會：
 - 主動傾聽
-- 反映使用者的情緒
-- 用自然語氣回應
+- 適度反映情緒
 - 使用開放式提問
-- 不批判、不說教、不強迫正向
-- 不要像客服，不要列大量條列
-- 不要保證結果，不要鼓勵依賴平台
+- 保持簡短自然
+- 像陪伴，不像客服或算命
 
-每次回覆規則：
-- 使用繁體中文
+每次回覆：
 - 2 到 5 句
-- 每句自然、短一點
-- 可以有一個溫和的問題，引導使用者繼續說
-- 不要使用「你應該」「你必須」「一定會好」這類語氣
+- 繁體中文
+- 溫和、低壓力
+- 不長篇大論
 
-危機處理：
-若使用者表達自殺、自傷、立即危險或急性精神危機，不要一般陪伴式回應。
-請簡短提醒他立刻聯絡當地緊急服務、可信任的人、或前往急診。
+若內容出現自傷、自殺或急性危機風險，只回覆安全提醒，請使用者立即尋求當地緊急協助或可信任的人陪伴。
 `.trim();
 
 let openai: OpenAI | null = null;
 
 function getOpenAI() {
-  if (!process.env.OPENAI_API_KEY) {
-    return null;
-  }
+  if (!process.env.OPENAI_API_KEY) return null;
 
   if (!openai) {
     openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -60,7 +54,7 @@ function transcriptFromMessages(messages: Pick<ChatMessageModel, "role" | "conte
   return messages
     .slice(-12)
     .map((message) => {
-      const role = message.role === "assistant" ? "陪伴師" : "使用者";
+      const role = message.role === "assistant" ? "陪伴者" : "使用者";
       return `${role}：${message.content}`;
     })
     .join("\n");
@@ -101,21 +95,20 @@ export async function createCompanionReply({
 
   const context = [
     `模式：${modeLabels[mode]}`,
-    `主題：${categoryLabels[category]}`,
-    cardName ? `本次抽到的反思卡：${cardName}` : null,
+    `分類：${categoryLabels[category]}`,
+    cardName ? `抽到的反思卡：${cardName}` : null,
   ]
     .filter(Boolean)
     .join("\n");
 
   const transcript = transcriptFromMessages(messages);
   const input = `
-以下是目前對話脈絡，請延續陪伴師人格回覆使用者最新一句話。
-
+請根據以下脈絡，回覆使用者一段自然、短而穩定的陪伴文字。
 ${context}
 
 ${transcript}
 
-使用者最新訊息：${userInput || "我現在不知道該說什麼。"}
+使用者現在說：${userInput || "我想先從今日指引開始。"}
 `.trim();
 
   const response = await client.responses.create({
