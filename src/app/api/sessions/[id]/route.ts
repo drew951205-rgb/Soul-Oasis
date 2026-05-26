@@ -17,6 +17,18 @@ function toDetail(session: {
   card?: { name: string } | null;
   messages?: { id: string; role: string; content: string; safetyFlag: boolean; createdAt: Date }[];
 }) {
+  const summaryTimeline = session.responseReflection
+    .split("\n")
+    .map((line) => {
+      const [label, ...rest] = line.split("：");
+      return {
+        label: label?.trim() ?? "",
+        text: rest.join("：").trim(),
+      };
+    })
+    .filter((item) => item.label && item.text);
+  const hasSummary = summaryTimeline.length >= 2 && Boolean(session.responseAction.trim());
+
   return {
     id: session.id,
     created_at: session.createdAt,
@@ -31,6 +43,13 @@ function toDetail(session: {
       reflection: session.responseReflection,
       action: session.responseAction,
       safety_flag: session.safetyFlag,
+    },
+    summary: {
+      has_summary: hasSummary,
+      title: hasSummary ? session.responseTitle : "",
+      timeline: hasSummary ? summaryTimeline : [],
+      focus: hasSummary ? session.responseEmpathy : "",
+      next_step: hasSummary ? session.responseAction : "",
     },
     messages: session.messages
       ? session.messages.map((message) => ({

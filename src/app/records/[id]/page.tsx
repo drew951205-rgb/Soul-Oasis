@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Trash2 } from "lucide-react";
+import { ArrowLeft, FileText, Trash2 } from "lucide-react";
 
 const modeLabels: Record<string, string> = {
   daily_guidance: "今日指引",
@@ -12,9 +12,9 @@ const modeLabels: Record<string, string> = {
 };
 
 const categoryLabels: Record<string, string> = {
-  relationship: "感情",
+  relationship: "關係",
   stress: "壓力",
-  career: "人生方向",
+  career: "方向",
   self_doubt: "自我懷疑",
   sleep: "睡眠",
 };
@@ -34,6 +34,13 @@ type SessionDetail = {
     action: string;
     safety_flag: boolean;
   };
+  summary: {
+    has_summary: boolean;
+    title: string;
+    timeline: { label: string; text: string }[];
+    focus: string;
+    next_step: string;
+  };
   messages: {
     id: string;
     role: string;
@@ -52,7 +59,7 @@ export default function RecordDetailPage() {
     fetch(`/api/sessions/${params.id}`)
       .then(async (response) => {
         const data = await response.json();
-        if (!response.ok) throw new Error(data.error ?? "載入失敗。");
+        if (!response.ok) throw new Error(data.error ?? "讀取紀錄失敗。");
         setSession(data.session);
       })
       .catch((err) => setError(err.message));
@@ -74,7 +81,7 @@ export default function RecordDetailPage() {
   }
 
   if (!session) {
-    return <main className="mx-auto max-w-3xl px-5 py-16 text-[#6c756d]">載入中...</main>;
+    return <main className="mx-auto max-w-3xl px-5 py-16 text-[#6c756d]">讀取中...</main>;
   }
 
   return (
@@ -107,18 +114,52 @@ export default function RecordDetailPage() {
           <span className="rounded-lg bg-[#eef2ea] px-3 py-2">{categoryLabels[session.category]}</span>
           {session.mood_score && <span className="rounded-lg bg-[#eef2ea] px-3 py-2">心情 {session.mood_score}/5</span>}
           {session.card_name && <span className="rounded-lg bg-[#eef2ea] px-3 py-2">抽到 {session.card_name}</span>}
+          {session.summary.has_summary && (
+            <span className="inline-flex items-center gap-1 rounded-lg bg-[#eef2ea] px-3 py-2">
+              <FileText size={15} aria-hidden="true" />
+              總結紀錄
+            </span>
+          )}
         </div>
+
+        {session.summary.has_summary && (
+          <section className="mt-8 rounded-lg border border-[#e6dfd3] bg-white p-5">
+            <p className="text-sm font-semibold uppercase text-[#51685a]">Conversation Summary</p>
+            <h2 className="mt-2 text-2xl font-semibold text-[#26332d]">{session.summary.title}</h2>
+
+            <div className="mt-5 grid gap-4 border-l-2 border-[#e6dfd3] pl-5">
+              {session.summary.timeline.map((item, index) => (
+                <section key={`${item.label}-${index}`} className="relative">
+                  <span className="absolute -left-[27px] top-1.5 size-3 rounded-full bg-[#8da892]" />
+                  <h3 className="font-semibold text-[#26332d]">{item.label}</h3>
+                  <p className="mt-1 text-sm leading-6 text-[#6c756d]">{item.text}</p>
+                </section>
+              ))}
+            </div>
+
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              <section className="rounded-lg bg-[#f8f5ee] p-4">
+                <h3 className="font-semibold text-[#26332d]">主要卡點</h3>
+                <p className="mt-2 text-sm leading-6 text-[#6c756d]">{session.summary.focus}</p>
+              </section>
+              <section className="rounded-lg bg-[#eef2ea] p-4">
+                <h3 className="font-semibold text-[#26332d]">下一步</h3>
+                <p className="mt-2 text-sm leading-6 text-[#6c756d]">{session.summary.next_step}</p>
+              </section>
+            </div>
+          </section>
+        )}
 
         {session.user_input && (
           <section className="mt-8 rounded-lg border border-[#e6dfd3] bg-white p-5">
-            <h2 className="font-semibold text-[#26332d]">當時輸入</h2>
+            <h2 className="font-semibold text-[#26332d]">最初輸入</h2>
             <p className="mt-3 whitespace-pre-wrap leading-7 text-[#6c756d]">{session.user_input}</p>
           </section>
         )}
 
-        {session.messages.length > 0 ? (
-          <section className="mt-5 rounded-lg border border-[#e6dfd3] bg-white p-5">
-            <h2 className="font-semibold text-[#26332d]">完整對話</h2>
+        <section className="mt-5 rounded-lg border border-[#e6dfd3] bg-white p-5">
+          <h2 className="font-semibold text-[#26332d]">對話內容</h2>
+          {session.messages.length > 0 ? (
             <div className="mt-4 space-y-4">
               {session.messages.map((message) => (
                 <div
@@ -137,21 +178,12 @@ export default function RecordDetailPage() {
                 </div>
               ))}
             </div>
-          </section>
-        ) : (
-          <div className="mt-5 grid gap-4">
-            {[
-              ["陪伴回應", session.result.empathy],
-              ["可以想一想", session.result.reflection],
-              ["小提醒", session.result.action],
-            ].map(([title, text]) => (
-              <section key={title} className="rounded-lg border border-[#e6dfd3] bg-white p-5">
-                <h2 className="font-semibold text-[#26332d]">{title}</h2>
-                <p className="mt-3 leading-7 text-[#6c756d]">{text}</p>
-              </section>
-            ))}
-          </div>
-        )}
+          ) : (
+            <p className="mt-3 text-sm leading-6 text-[#6c756d]">
+              這筆紀錄沒有聊天訊息，只保留固定格式回應。
+            </p>
+          )}
+        </section>
       </article>
     </main>
   );

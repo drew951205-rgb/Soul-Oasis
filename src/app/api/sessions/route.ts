@@ -22,6 +22,18 @@ function serializeSession(session: {
   createdAt: Date;
   card?: { name: string } | null;
 }) {
+  const summaryTimeline = session.responseReflection
+    .split("\n")
+    .map((line) => {
+      const [label, ...rest] = line.split("：");
+      return {
+        label: label?.trim() ?? "",
+        text: rest.join("：").trim(),
+      };
+    })
+    .filter((item) => item.label && item.text);
+  const hasSummary = summaryTimeline.length >= 2 && Boolean(session.responseAction.trim());
+
   return {
     id: session.id,
     created_at: session.createdAt,
@@ -30,6 +42,10 @@ function serializeSession(session: {
     title: session.responseTitle,
     mood_score: session.moodScore,
     preview_text: session.responseEmpathy,
+    has_summary: hasSummary,
+    summary_preview: hasSummary ? session.responseEmpathy : "",
+    summary_next_step: hasSummary ? session.responseAction : "",
+    summary_timeline: hasSummary ? summaryTimeline : [],
     user_input: session.userInput,
     card_name: session.card?.name ?? null,
     result: {
